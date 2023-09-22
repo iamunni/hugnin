@@ -26,9 +26,9 @@ func NewSQLiteWriter() Writer {
 	}
 }
 
-func (s *SQLiteWriter) Write(value string, tag string) error {
+func (s *SQLiteWriter) Write(value string, tags []string) error {
 	defer s.dbConn.Close()
-	err := insertNote(s.dbConn, value, tag)
+	err := insertNote(s.dbConn, value, tags)
 	if err != nil {
 		return err
 	}
@@ -74,18 +74,27 @@ func createTable(dbConn *sql.DB) error {
 	return nil
 }
 
-func insertNote(dbConn *sql.DB, value string, tag string) error {
+func insertNote(dbConn *sql.DB, value string, tags []string) error {
 	log.Println("Inserting notes record ...")
-	insertNoteSQL := `INSERT INTO notes (note, tags) VALUES (?, ?)`
-	statement, err := dbConn.Prepare(insertNoteSQL) // Prepare statement.
-	// This is good to avoid SQL injections
-	if err != nil {
-		return err
-	}
-	_, err = statement.Exec(value, tag)
-	if err != nil {
-		return err
-	}
 
-	return err
+	tx, err := dbConn.Begin()
+	if err != nil {
+		return err
+	}
+	stmt, err := tx.Prepare("INSERT INTO notes (note, tags) VALUES (?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	for _, tag := range tags {
+		_, err = stmt.Exec(value, tag)
+		if err != nil {
+			return err
+		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
 }

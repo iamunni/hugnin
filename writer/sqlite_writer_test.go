@@ -28,13 +28,13 @@ func TestSQLiteWriter_Write(t *testing.T) {
 	tests := []struct {
 		name    string
 		value   string
-		tag     string
+		tags    []string
 		wantErr bool
 	}{
 		{
 			name:    "sample value and tag",
 			value:   "sample value",
-			tag:     "sample tag",
+			tags:    []string{"sample tag"},
 			wantErr: false,
 		},
 	}
@@ -44,9 +44,13 @@ func TestSQLiteWriter_Write(t *testing.T) {
 			s := &SQLiteWriter{
 				dbConn: mockWriterInstance.dbConn,
 			}
+			mockWriterInstance.mock.ExpectBegin()
 			mockWriterInstance.mock.ExpectPrepare("INSERT INTO notes")
-			mockWriterInstance.mock.ExpectExec("INSERT INTO notes").WithArgs(tt.value, tt.tag).WillReturnResult(sqlmock.NewResult(1, 1))
-			if err := s.Write(tt.value, tt.tag); (err != nil) != tt.wantErr {
+			for _, tag := range tt.tags {
+				mockWriterInstance.mock.ExpectExec("INSERT INTO notes").WithArgs(tt.value, tag).WillReturnResult(sqlmock.NewResult(1, 1))
+			}
+			mockWriterInstance.mock.ExpectCommit()
+			if err := s.Write(tt.value, tt.tags); (err != nil) != tt.wantErr {
 				t.Errorf("SQLiteWriter.Write() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

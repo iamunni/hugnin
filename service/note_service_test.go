@@ -7,7 +7,7 @@ import (
 	"github.com/iamunni/hugnin/writer"
 )
 
-func (m *mockWriter) Write(value string, tag string) error {
+func (m *mockWriter) Write(value string, tag []string) error {
 	if len(value) == 0 || len(tag) == 0 {
 		return fmt.Errorf("%s", "error")
 	}

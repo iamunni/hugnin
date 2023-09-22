@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/iamunni/hugnin/writer"
 )
@@ -22,7 +23,11 @@ func NewNoteService(writer writer.Writer) NoteService {
 
 func (n *noteService) Add(value string, tag string) error {
 	fmt.Printf("%+v\n", n)
-	err := n.writer.Write(value, tag)
+	var tags []string
+	for _, tag := range strings.Split(tag, ",") {
+		tags = append(tags, strings.TrimSpace(tag))
+	}
+	err := n.writer.Write(value, tags)
 	if err != nil {
 		return err
 	}
