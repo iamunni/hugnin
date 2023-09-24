@@ -8,4 +8,5 @@ type Store interface {
 	Init(string) error
 	Write(value string, tags []string) error
 	Read(note model.Note) ([]model.Note, error)
+	Delete(note model.Note) error
 }

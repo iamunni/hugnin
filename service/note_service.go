@@ -11,6 +11,7 @@ import (
 type NoteService interface {
 	Add(note model.Note) error
 	View(note model.Note) error
+	Delete(note model.Note) error
 }
 
 type noteService struct {
@@ -44,6 +45,14 @@ func (n *noteService) View(note model.Note) error {
 		return err
 	}
 	print(result)
+	return nil
+}
+
+func (n *noteService) Delete(note model.Note) error {
+	err := n.store.Delete(note)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

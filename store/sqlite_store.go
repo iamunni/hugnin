@@ -97,6 +97,37 @@ func (s *SQLiteStore) Init(dbFile string) error {
 	return nil
 }
 
+func (s *SQLiteStore) Delete(note model.Note) error {
+	defer s.dbConn.Close()
+	if note.Id == -1 {
+		statement, err := s.dbConn.Prepare("DELETE FROM notes") // Prepare SQL Statement
+		if err != nil {
+			return err
+		}
+		statement.Exec() // Execute SQL Statements
+		return nil
+	} else if note.Id != 0 {
+		stmt := fmt.Sprintf("DELETE FROM notes WHERE Id=%d", note.Id)
+		statement, err := s.dbConn.Prepare(stmt) // Prepare SQL Statement
+		if err != nil {
+			return err
+		}
+		statement.Exec() // Execute SQL Statements
+		return nil
+	}
+	if note.Tag != "" {
+		fmt.Println("removing notes with tags")
+		stmt := fmt.Sprintf("DELETE FROM notes WHERE tags LIKE '%s'", note.Tag)
+		statement, err := s.dbConn.Prepare(stmt) // Prepare SQL Statement
+		if err != nil {
+			return err
+		}
+		statement.Exec() // Execute SQL Statements
+		return nil
+	}
+	return nil
+}
+
 func createDatabase(dbFile string) error {
 	file, err := os.Create(dbFile) // Create SQLite file
 	if err != nil {

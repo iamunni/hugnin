@@ -88,12 +88,12 @@ func TestSQLiteWriter_Init(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockWriterInstance := newMockStore(t)
+			mockStoreInstance := newMockStore(t)
 			s := &SQLiteStore{
-				dbConn: mockWriterInstance.dbConn,
+				dbConn: mockStoreInstance.dbConn,
 			}
-			mockWriterInstance.mock.ExpectPrepare("CREATE TABLE IF NOT EXISTS notes")
-			mockWriterInstance.mock.ExpectExec("CREATE TABLE IF NOT EXISTS notes").WillReturnResult(sqlmock.NewResult(1, 1))
+			mockStoreInstance.mock.ExpectPrepare("CREATE TABLE IF NOT EXISTS notes")
+			mockStoreInstance.mock.ExpectExec("CREATE TABLE IF NOT EXISTS notes").WillReturnResult(sqlmock.NewResult(1, 1))
 			if err := s.Init(dbFile); (err != nil) != tt.wantErr {
 				t.Errorf("SQLiteWriter.Init() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -277,6 +277,93 @@ func TestSQLiteStore_ReadWithNoteAndTagFilter(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("SQLiteStore.Read() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSQLiteStore_DeleteAll(t *testing.T) {
+	tests := []struct {
+		name    string
+		note    model.Note
+		wantErr bool
+	}{
+		{
+			name: "delete all notes",
+			note: model.Note{
+				Id: -1,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockStoreInstance := newMockStore(t)
+			mockStoreInstance.mock.ExpectPrepare("DELETE FROM notes")
+			mockStoreInstance.mock.ExpectExec("DELETE FROM notes")
+			s := &SQLiteStore{
+				dbConn: mockStoreInstance.dbConn,
+			}
+			if err := s.Delete(tt.note); (err != nil) != tt.wantErr {
+				t.Errorf("SQLiteStore.Delete() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestSQLiteStore_DeleteBasedOnTag(t *testing.T) {
+	tests := []struct {
+		name    string
+		note    model.Note
+		wantErr bool
+	}{
+		{
+			name: "delete notes based on Tag",
+			note: model.Note{
+				Tag: "tag1",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockStoreInstance := newMockStore(t)
+			mockStoreInstance.mock.ExpectPrepare("DELETE FROM notes WHERE tags LIKE (.+')$")
+			mockStoreInstance.mock.ExpectExec("DELETE FROM notes WHERE tags LIKE (.+')$")
+			s := &SQLiteStore{
+				dbConn: mockStoreInstance.dbConn,
+			}
+			if err := s.Delete(tt.note); (err != nil) != tt.wantErr {
+				t.Errorf("SQLiteStore.Delete() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestSQLiteStore_DeleteBasedOnId(t *testing.T) {
+	tests := []struct {
+		name    string
+		note    model.Note
+		wantErr bool
+	}{
+		{
+			name: "delete notes based on Tag",
+			note: model.Note{
+				Id: 1,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockStoreInstance := newMockStore(t)
+			mockStoreInstance.mock.ExpectPrepare("DELETE FROM notes WHERE Id=(.+)$")
+			mockStoreInstance.mock.ExpectExec("DELETE FROM notes WHERE Id=(.+)$")
+			s := &SQLiteStore{
+				dbConn: mockStoreInstance.dbConn,
+			}
+			if err := s.Delete(tt.note); (err != nil) != tt.wantErr {
+				t.Errorf("SQLiteStore.Delete() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
