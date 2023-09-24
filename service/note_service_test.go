@@ -4,65 +4,101 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/iamunni/hugnin/writer"
+	"github.com/iamunni/hugnin/model"
+	"github.com/iamunni/hugnin/store"
 )
 
-func (m *mockWriter) Write(value string, tag []string) error {
-	if len(value) == 0 || len(tag) == 0 {
-		return fmt.Errorf("%s", "error")
+func (m *mockStore) Write(value string, tags []string) error {
+	if len(value) == 0 {
+		return fmt.Errorf("%s", "note value not passed error")
 	}
 	return nil
 }
 
-func (m *mockWriter) Init(dbFile string) error {
+func (m *mockStore) Init(dbFile string) error {
 	return nil
 }
 
-func newMockWriter() writer.Writer {
-	return &mockWriter{}
+func (m *mockStore) Read(note model.Note) ([]model.Note, error) {
+	return nil, nil
 }
 
-type mockWriter struct{}
+func newMockStore() store.Store {
+	return &mockStore{}
+}
 
-var mockWriterInstance = newMockWriter()
+type mockStore struct{}
+
+var mockStoreInstance = newMockStore()
 
 func Test_noteService_Add(t *testing.T) {
 	tests := []struct {
 		name    string
-		value   string
-		tag     string
-		writer  writer.Writer
+		note    model.Note
+		store   store.Store
 		wantErr bool
 	}{
 		{
-			name:    "Empty value and tag",
-			value:   "",
-			tag:     "",
-			writer:  mockWriterInstance,
+			name: "Empty value and tag",
+			note: model.Note{
+				Value: "",
+				Tag:   "",
+			},
+			store:   mockStoreInstance,
 			wantErr: true,
 		},
 		{
-			name:    "Empty value and non empty tag",
-			value:   "",
-			tag:     "test tag",
-			writer:  mockWriterInstance,
+			name: "Empty value and non empty tag",
+			note: model.Note{
+				Value: "",
+				Tag:   "sample tag",
+			},
+			store:   mockStoreInstance,
 			wantErr: true,
 		},
 		{
-			name:    "non empty value and non empty tag",
-			value:   "test value",
-			tag:     "test tag",
-			writer:  mockWriterInstance,
+			name: "non empty value and non empty tag",
+			note: model.Note{
+				Value: "sample value",
+				Tag:   "sample tag",
+			},
+			store:   mockStoreInstance,
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			n := &noteService{
-				writer: tt.writer,
+				store: tt.store,
 			}
-			if err := n.Add(tt.value, tt.tag); (err != nil) != tt.wantErr {
+			if err := n.Add(tt.note); (err != nil) != tt.wantErr {
 				t.Errorf("noteService.Add() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_noteService_View(t *testing.T) {
+	tests := []struct {
+		name    string
+		note    model.Note
+		store   store.Store
+		wantErr bool
+	}{
+		{
+			name:    "View All Notes",
+			note:    model.Note{},
+			store:   mockStoreInstance,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			n := &noteService{
+				store: tt.store,
+			}
+			if err := n.View(tt.note); (err != nil) != tt.wantErr {
+				t.Errorf("noteService.View() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

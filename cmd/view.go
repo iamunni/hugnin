@@ -4,16 +4,16 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
 	"log"
 
+	"github.com/iamunni/hugnin/service"
 	"github.com/iamunni/hugnin/store"
 	"github.com/spf13/cobra"
 )
 
-// initCmd represents the init command
-var initCmd = &cobra.Command{
-	Use:   "init",
+// viewCmd represents the view command
+var viewCmd = &cobra.Command{
+	Use:   "view",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -22,9 +22,8 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("initializing the database")
-		dbFile := "sqlite-database.db"
-		err := store.NewSQLiteStore().Init(dbFile)
+		noteService := service.NewNoteService(store.NewSQLiteStore())
+		err := noteService.View(note)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -32,5 +31,8 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	rootCmd.AddCommand(initCmd)
+	rootCmd.AddCommand(viewCmd)
+
+	viewCmd.PersistentFlags().StringVarP(&note.Value, "note", "n", "", "Search by note")
+	viewCmd.PersistentFlags().StringVarP(&note.Tag, "tags", "t", "", "Search by tags")
 }

@@ -7,11 +7,14 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/iamunni/hugnin/model"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var cfgFile string
+
+var note model.Note
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{

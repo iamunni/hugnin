@@ -1,18 +1,22 @@
-package writer
+package store
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
+	"reflect"
+	"strings"
 
+	"github.com/iamunni/hugnin/model"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type SQLiteWriter struct {
+type SQLiteStore struct {
 	dbConn *sql.DB
 }
 
-func NewSQLiteWriter() Writer {
+func NewSQLiteStore() Store {
 	db, err := sql.Open("sqlite3", "./sqlite-database.db")
 	if err != nil {
 		log.Fatal(err)
@@ -21,12 +25,12 @@ func NewSQLiteWriter() Writer {
 	if err != nil {
 		panic(err)
 	}
-	return &SQLiteWriter{
+	return &SQLiteStore{
 		dbConn: db,
 	}
 }
 
-func (s *SQLiteWriter) Write(value string, tags []string) error {
+func (s *SQLiteStore) Write(value string, tags []string) error {
 	defer s.dbConn.Close()
 	err := insertNote(s.dbConn, value, tags)
 	if err != nil {
@@ -35,7 +39,52 @@ func (s *SQLiteWriter) Write(value string, tags []string) error {
 	return nil
 }
 
-func (s *SQLiteWriter) Init(dbFile string) error {
+func (s *SQLiteStore) Read(note model.Note) ([]model.Note, error) {
+	defer s.dbConn.Close()
+
+	var sb strings.Builder
+	sb.WriteString("SELECT * FROM notes")
+	if !reflect.DeepEqual(note, model.Note{}) {
+		sb.WriteString(" WHERE")
+		if len(note.Value) > 0 {
+			sb.WriteString(fmt.Sprintf(" note LIKE '%s'", note.Value))
+		}
+		if len(note.Tag) > 0 {
+			if len(note.Value) > 0 {
+				sb.WriteString(" AND")
+			}
+			tags := strings.Split(note.Tag, ",")
+			quotedTags := "'" + strings.Join(tags, "','") + "'"
+			sb.WriteString(fmt.Sprintf(" tags IN (%s)", quotedTags))
+		}
+	}
+
+	sb.WriteString(";")
+	stmt := sb.String()
+
+	var result []model.Note
+	rows, err := s.dbConn.Query(stmt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var note model.Note
+		err = rows.Scan(&note.Id, &note.Value, &note.Tag)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, note)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (s *SQLiteStore) Init(dbFile string) error {
 	defer s.dbConn.Close()
 	err := createDatabase(dbFile)
 	if err != nil {

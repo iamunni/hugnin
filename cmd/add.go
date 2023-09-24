@@ -8,12 +8,9 @@ import (
 	"strings"
 
 	"github.com/iamunni/hugnin/service"
-	"github.com/iamunni/hugnin/writer"
+	"github.com/iamunni/hugnin/store"
 	"github.com/spf13/cobra"
 )
-
-var note string
-var tag string
 
 // addCmd represents the add command
 var addCmd = &cobra.Command{
@@ -27,9 +24,10 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		value := strings.Join(args, " ")
-		noteService := service.NewNoteService(writer.NewSQLiteWriter())
-		err := noteService.Add(value, tag)
+		note.Value = strings.Join(args, " ")
+		noteService := service.NewNoteService(store.NewSQLiteStore())
+
+		err := noteService.Add(note)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -39,5 +37,5 @@ to quickly create a Cobra application.`,
 func init() {
 	rootCmd.AddCommand(addCmd)
 
-	addCmd.PersistentFlags().StringVarP(&tag, "tag", "t", "", "Tag for the note")
+	addCmd.PersistentFlags().StringVarP(&note.Tag, "tag", "t", "", "Tag for the note")
 }
