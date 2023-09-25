@@ -12,6 +12,7 @@ type NoteService interface {
 	Add(note model.Note) error
 	View(note model.Note) error
 	Delete(note model.Note) error
+	Search(keyword string) error
 }
 
 type noteService struct {
@@ -41,6 +42,15 @@ func (n *noteService) Add(note model.Note) error {
 
 func (n *noteService) View(note model.Note) error {
 	result, err := n.store.Read(note)
+	if err != nil {
+		return err
+	}
+	print(result)
+	return nil
+}
+
+func (n *noteService) Search(keyword string) error {
+	result, err := n.store.Search(keyword)
 	if err != nil {
 		return err
 	}

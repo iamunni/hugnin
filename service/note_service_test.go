@@ -23,6 +23,10 @@ func (m *mockStore) Read(note model.Note) ([]model.Note, error) {
 	return nil, nil
 }
 
+func (m *mockStore) Search(keyword string) ([]model.Note, error) {
+	return nil, nil
+}
+
 func (m *mockStore) Delete(note model.Note) error {
 	return nil
 }
@@ -129,6 +133,32 @@ func Test_noteService_Delete(t *testing.T) {
 			}
 			if err := n.Delete(tt.note); (err != nil) != tt.wantErr {
 				t.Errorf("noteService.Delete() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_noteService_Search(t *testing.T) {
+	tests := []struct {
+		name    string
+		keyword string
+		store   store.Store
+		wantErr bool
+	}{
+		{
+			name:    "non empy keyword",
+			keyword: "test",
+			store:   mockStoreInstance,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			n := &noteService{
+				store: tt.store,
+			}
+			if err := n.Search(tt.keyword); (err != nil) != tt.wantErr {
+				t.Errorf("noteService.Search() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

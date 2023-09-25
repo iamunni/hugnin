@@ -97,6 +97,37 @@ func (s *SQLiteStore) Init(dbFile string) error {
 	return nil
 }
 
+func (s *SQLiteStore) Search(keyword string) ([]model.Note, error) {
+	defer s.dbConn.Close()
+	rows, err := s.dbConn.Query("SELECT * FROM notes")
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var result []model.Note
+	note := model.Note{}
+
+	for rows.Next() {
+		note = model.Note{}
+
+		err = rows.Scan(&note.Id, &note.Value, &note.Tag)
+
+		if strings.Contains(note.Value, keyword) {
+			result = append(result, note)
+		} else if strings.Contains(note.Tag, keyword) {
+			result = append(result, note)
+		}
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return result, nil
+}
+
 func (s *SQLiteStore) Delete(note model.Note) error {
 	defer s.dbConn.Close()
 	if note.Id == -1 {

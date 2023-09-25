@@ -368,3 +368,71 @@ func TestSQLiteStore_DeleteBasedOnId(t *testing.T) {
 		})
 	}
 }
+
+func TestSQLiteStore_SearchAvailableNoteValue(t *testing.T) {
+	tests := []struct {
+		name    string
+		keyword string
+		want    []model.Note
+		wantErr bool
+	}{
+		{
+			name:    "keyword in note value",
+			keyword: "test",
+			want: []model.Note{
+				{
+					Id:    1,
+					Value: "testnote",
+					Tag:   "tag1",
+				},
+			},
+		},
+		{
+			name:    "keyword in tag value",
+			keyword: "2",
+			want: []model.Note{
+				{
+					Id:    2,
+					Value: "note2",
+					Tag:   "tag2",
+				},
+			},
+		},
+		{
+			name:    "keyword in multiple tag values",
+			keyword: "tag",
+			want: []model.Note{
+				{
+					Id:    1,
+					Value: "testnote",
+					Tag:   "tag1",
+				},
+				{
+					Id:    2,
+					Value: "note2",
+					Tag:   "tag2",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockStoreInstance := newMockStore(t)
+			rows := mockStoreInstance.mock.NewRows([]string{"id", "note", "tags"}).
+				AddRow(1, "testnote", "tag1").
+				AddRow(2, "note2", "tag2")
+			mockStoreInstance.mock.ExpectQuery("SELECT (\\*+) FROM notes").WillReturnRows(rows)
+			s := &SQLiteStore{
+				dbConn: mockStoreInstance.dbConn,
+			}
+			got, err := s.Search(tt.keyword)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("SQLiteStore.Search() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SQLiteStore.Search() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
