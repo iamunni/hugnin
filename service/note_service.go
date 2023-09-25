@@ -2,10 +2,13 @@ package service
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/iamunni/hugnin/model"
 	"github.com/iamunni/hugnin/store"
+	"github.com/olekukonko/tablewriter"
 )
 
 type NoteService interface {
@@ -67,5 +70,17 @@ func (n *noteService) Delete(note model.Note) error {
 }
 
 func print(notes []model.Note) {
-	fmt.Printf("%v", notes)
+	var data = [][]string{}
+
+	for _, note := range notes {
+		data = append(data, []string{strconv.Itoa(int(note.Id)), note.Value, note.Tag})
+	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Id", "Note", "Tag"})
+
+	for _, v := range data {
+		table.Append(v)
+	}
+	table.Render()
 }
